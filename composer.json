@@ -10,7 +10,9 @@
         "filament/filament": "^3.2",
         "flowframe/laravel-trend": "^0.3.0",
         "laravel/framework": "^11.9",
+        "laravel/socialite": "^5.16",
         "laravel/tinker": "^2.9",
+        "livewire/livewire": "*",
         "maatwebsite/excel": "^3.1",
         "openai-php/client": "^0.10.2",
         "spatie/laravel-permission": "^6.9"
