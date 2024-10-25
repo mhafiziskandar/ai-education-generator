@@ -10,6 +10,10 @@ return [
     ],
     'pages' => [
         'namespace' => 'App\\Filament\\Pages',
+        'path' => app_path('Filament/Pages'),
+        'register' => [
+            \App\Filament\Pages\Dashboard::class,
+        ],
     ],
     'resources' => [
         'namespace' => 'App\\Filament\\Resources',
