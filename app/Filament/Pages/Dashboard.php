@@ -26,8 +26,8 @@ class Dashboard extends BaseDashboard
     {
         return [
             DashboardStatsOverview::class,
-            LatestDocumentsWidget::class,
-            RecentGeneratedContentWidget::class,
+            // LatestDocumentsWidget::class,
+            // RecentGeneratedContentWidget::class,
             DocumentProcessingChart::class,
             ApiUsageChart::class,
         ];
