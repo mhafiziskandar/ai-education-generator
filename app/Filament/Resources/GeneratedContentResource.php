@@ -16,73 +16,65 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class GeneratedContentResource extends Resource
 {
     protected static ?string $model = GeneratedContent::class;
-    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?string $navigationGroup = 'Content Management';
 
-    public static function form(Forms\Form $form): Forms\Form
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Card::make()
                     ->schema([
+                        Forms\Components\Select::make('document_id')
+                            ->relationship('document', 'title')
+                            ->required(),
                         Forms\Components\Select::make('content_type')
                             ->options([
-                                'quiz' => 'Quiz',
+                                'quiz' => 'Quiz Questions',
                                 'study_guide' => 'Study Guide',
-                                'summary' => 'Summary',
+                                'summary' => 'Chapter Summary',
                                 'learning_path' => 'Learning Path',
                             ])
                             ->required(),
                         Forms\Components\RichEditor::make('content')
                             ->required()
-                            ->columnSpan('full'),
-                        Forms\Components\TextInput::make('token_count')
-                            ->numeric()
-                            ->disabled(),
-                        Forms\Components\TextInput::make('api_cost')
-                            ->numeric()
-                            ->prefix('$')
-                            ->disabled(),
+                            ->columnSpanFull(),
+                        Forms\Components\KeyValue::make('settings')
+                            ->label('Generation Settings'),
                     ])
             ]);
     }
 
-    public static function table(Tables\Table $table): Tables\Table
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('document.title')
+                    ->label('Document Title')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('content_type')
-                    ->badge(),
-                Tables\Columns\TextColumn::make('token_count')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('api_cost')
-                    ->money('usd')
+                    ->label('Content Type')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created At')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('content_type')
                     ->options([
-                        'quiz' => 'Quiz',
+                        'quiz' => 'Quiz Questions',
                         'study_guide' => 'Study Guide',
-                        'summary' => 'Summary',
+                        'summary' => 'Chapter Summary',
                         'learning_path' => 'Learning Path',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+            ->emptyStateIcon('heroicon-o-academic-cap') // Icon for empty state
+            ->emptyStateHeading('No Generated Content Found') // Heading for empty state
+            ->emptyStateDescription('No content has been generated yet. Please create new content.') // Description for empty state
+            ->emptyStateActions([
+                Tables\Actions\CreateAction::make()->label('Generate Content'), // Call to action for empty state
             ]);
     }
 
