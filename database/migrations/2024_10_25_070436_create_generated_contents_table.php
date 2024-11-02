@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('generated_contents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
-            $table->string('content_type');
+            $table->string('content_type')->nullable();
             $table->longText('content');
             $table->boolean('is_published')->default(false);
             $table->integer('tokens_used')->default(0);

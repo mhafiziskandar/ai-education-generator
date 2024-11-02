@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('file_path');
+            $table->string('file_path')->nullable();
             $table->string('document_type');
             $table->text('content')->nullable();
             $table->boolean('is_processed')->default(false);
