@@ -29,7 +29,7 @@ class Dashboard extends BaseDashboard
             // LatestDocumentsWidget::class,
             // RecentGeneratedContentWidget::class,
             DocumentProcessingChart::class,
-            ApiUsageChart::class,
+            // ApiUsageChart::class,
         ];
     }
 
