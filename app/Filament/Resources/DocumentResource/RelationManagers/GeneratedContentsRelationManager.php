@@ -18,10 +18,9 @@ class GeneratedContentsRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('content_type')
                     ->options([
-                        'quiz' => 'Quiz',
-                        'study_guide' => 'Study Guide',
+                        'quiz' => 'Quiz Questions',
+                        'lesson_plan' => 'Lesson Plan',
                         'summary' => 'Summary',
-                        'learning_path' => 'Learning Path',
                     ])
                     ->required(),
                 Forms\Components\RichEditor::make('content')
@@ -36,7 +35,7 @@ class GeneratedContentsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('content_type')
                     ->badge(),
-                Tables\Columns\TextColumn::make('token_count')
+                Tables\Columns\TextColumn::make('token_used')
                     ->numeric(),
                 Tables\Columns\TextColumn::make('api_cost')
                     ->money('usd'),
@@ -46,10 +45,9 @@ class GeneratedContentsRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\SelectFilter::make('content_type')
                     ->options([
-                        'quiz' => 'Quiz',
-                        'study_guide' => 'Study Guide',
+                        'quiz' => 'Quiz Questions',
+                        'lesson_plan' => 'Lesson Plan',
                         'summary' => 'Summary',
-                        'learning_path' => 'Learning Path',
                     ]),
             ])
             ->headerActions([

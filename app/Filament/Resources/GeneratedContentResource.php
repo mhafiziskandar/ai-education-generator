@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Get;
 
 class GeneratedContentResource extends Resource
 {
@@ -31,16 +32,53 @@ class GeneratedContentResource extends Resource
                         Forms\Components\Select::make('content_type')
                             ->options([
                                 'quiz' => 'Quiz Questions',
-                                'study_guide' => 'Study Guide',
-                                'summary' => 'Chapter Summary',
-                                'learning_path' => 'Learning Path',
+                                'lesson_plan' => 'Lesson Plan',
+                                'summary' => 'Summary',
                             ])
+                            ->live()
                             ->required(),
-                        Forms\Components\RichEditor::make('content')
-                            ->required()
-                            ->columnSpanFull(),
-                        Forms\Components\KeyValue::make('settings')
-                            ->label('Generation Settings'),
+                        Forms\Components\Grid::make()
+                            ->schema([
+                                Forms\Components\Grid::make()
+                                    ->schema([
+                                        Forms\Components\TextInput::make('duration_hours')
+                                            ->label('Hours')
+                                            ->numeric()
+                                            ->default(1)
+                                            ->minValue(0)
+                                            ->maxValue(24)
+                                            ->suffix('hours')
+                                            ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
+                                        Forms\Components\TextInput::make('duration_minutes')
+                                            ->label('Minutes')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->maxValue(59)
+                                            ->suffix('mins')
+                                            ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
+                                    ])
+                                    ->columns(2)
+                                    ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
+                                Forms\Components\Select::make('grade_level')
+                                    ->label('Grade Level')
+                                    ->options([
+                                        'elementary' => 'Elementary School',
+                                        'middle' => 'Middle School',
+                                        'high' => 'High School',
+                                        'college' => 'College',
+                                    ])
+                                    ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan')
+                                    ->required(),
+                            ]),
+                        Forms\Components\Toggle::make('include_images')
+                            ->label('Include Images')
+                            ->default(true),
+                        // Forms\Components\RichEditor::make('content')
+                        //     ->required()
+                        //     ->columnSpanFull(),
+                        // Forms\Components\KeyValue::make('settings')
+                        //     ->label('Generation Settings'),
                     ])
             ]);
     }
@@ -65,9 +103,8 @@ class GeneratedContentResource extends Resource
                 Tables\Filters\SelectFilter::make('content_type')
                     ->options([
                         'quiz' => 'Quiz Questions',
-                        'study_guide' => 'Study Guide',
-                        'summary' => 'Chapter Summary',
-                        'learning_path' => 'Learning Path',
+                        'lesson_plan' => 'Lesson Plan',
+                        'summary' => 'Summary',
                     ]),
             ])
             ->emptyStateIcon('heroicon-o-academic-cap') // Icon for empty state
