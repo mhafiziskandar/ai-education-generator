@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\GeneratedContentResource\Pages;
 
 use App\Filament\Resources\GeneratedContentResource;
-use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewGeneratedContent extends ViewRecord
@@ -13,8 +13,14 @@ class ViewGeneratedContent extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
-            Actions\DeleteAction::make(),
+            Action::make('download')
+                ->label('Download PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->action(function () {
+                    return response()->download(
+                        storage_path('app/public/' . $this->record->file_path)
+                    );
+                }),
         ];
     }
 }
