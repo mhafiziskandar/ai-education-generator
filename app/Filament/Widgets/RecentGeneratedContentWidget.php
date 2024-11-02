@@ -23,7 +23,7 @@ class RecentGeneratedContentWidget extends BaseWidget
                     ->searchable(),
                 Tables\Columns\TextColumn::make('content_type')
                     ->badge(),
-                Tables\Columns\TextColumn::make('token_count')
+                Tables\Columns\TextColumn::make('tokens_used')
                     ->numeric(),
                 Tables\Columns\TextColumn::make('api_cost')
                     ->money('usd'),
