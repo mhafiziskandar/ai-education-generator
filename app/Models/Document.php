@@ -15,15 +15,34 @@ class Document extends Model
     protected $fillable = [
         'title',
         'file_path',
+        'document_type',
         'content',
-        'status',
-        'file_type',
-        'token_count',
+        'tokens_used',
         'processing_status',
     ];
+
+    protected $cast = [
+        'tags' => 'array',
+        'file_path' => 'array'
+    ];
+
+    protected static function boot() {
+        parent::boot();
+
+        static::deleting(function ($document) {
+            if($document->file_path) {
+                Storage::disk('public')->delete($document->file_path);
+            }
+        });
+    }
 
     public function generatedContents(): HasMany
     {
         return $this->hasMany(GeneratedContent::class);
+    }
+
+    public function getFileUrlAttribute()
+    {
+        return $this->file_path ? Storage::disk('public')->url($this->file_path) : null;
     }
 }

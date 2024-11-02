@@ -16,7 +16,7 @@ class GeneratedContent extends Model
         'content_type', // quiz, study_guide, summary, learning_path
         'content',
         'status',
-        'token_count',
+        'tokens_used',
         'api_cost',
     ];
 
