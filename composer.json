@@ -15,6 +15,7 @@
         "livewire/livewire": "*",
         "maatwebsite/excel": "^3.1",
         "openai-php/client": "^0.10.2",
+        "openai-php/laravel": "^0.10.2",
         "spatie/laravel-permission": "^6.9"
     },
     "require-dev": {
