@@ -17,8 +17,11 @@ use Filament\Forms\Get;
 class GeneratedContentResource extends Resource
 {
     protected static ?string $model = GeneratedContent::class;
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+
+    protected static ?string $navigationIcon = 'heroicon-o-sparkles';
     protected static ?string $navigationGroup = 'Content Management';
+    protected static ?string $navigationLabel = 'AI Content Generator';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
