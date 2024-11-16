@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Document extends Model
 {
@@ -13,6 +14,7 @@ class Document extends Model
     // use HasUuids;
 
     protected $fillable = [
+        'user_id',
         'title',
         'file_path',
         'document_type',
@@ -36,9 +38,19 @@ class Document extends Model
         });
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function generatedContents(): HasMany
     {
         return $this->hasMany(GeneratedContent::class);
+    }
+
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class);
     }
 
     public function getFileUrlAttribute()
