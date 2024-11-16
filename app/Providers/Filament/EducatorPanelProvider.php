@@ -35,8 +35,8 @@ class EducatorPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Educator/Widgets'), for: 'App\\Filament\\Educator\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                // Widgets\AccountWidget::class,
+                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -51,6 +51,10 @@ class EducatorPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->login()
+            ->registration()
+            ->passwordReset()
+            ->emailVerification();
     }
 }
