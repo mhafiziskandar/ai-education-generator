@@ -11,6 +11,10 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use App\Filament\Educator\Resources\GeneratedContentResource\Pages\CreateGeneratedContent;
+use App\Filament\Educator\Resources\GeneratedContentResource\Pages\EditGeneratedContent as PagesEditGeneratedContent;
+use App\Filament\Educator\Resources\GeneratedContentResource\Pages\ListGeneratedContents as PagesListGeneratedContents;
+use App\Filament\Educator\Resources\GeneratedContentResource\Pages\ViewGeneratedContent as PagesViewGeneratedContent;
 
 class GeneratedContentResource extends Resource
 {
@@ -119,10 +123,10 @@ class GeneratedContentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListGeneratedContents::route('/'),
-            'create' => Pages\CreateGeneratedContent::route('/create'),
-            'view' => Pages\ViewGeneratedContent::route('/{record}'),
-            'edit' => Pages\EditGeneratedContent::route('/{record}/edit'),
+            'index' => PagesListGeneratedContents::route('/'),
+            'create' => CreateGeneratedContent::route('/create'),
+            'view' => PagesViewGeneratedContent::route('/{record}'),
+            'edit' => PagesEditGeneratedContent::route('/{record}/edit'),
         ];
     }
 
