@@ -10,13 +10,14 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
+            $table->string('slug');
             $table->string('file_path')->nullable();
             $table->string('document_type');
-            $table->text('content')->nullable();
-            $table->boolean('is_processed')->default(false);
+            $table->json('tags')->nullable();
             $table->integer('tokens_used')->default(0);
-            $table->json('metadata')->nullable();
+            $table->string('processing_status')->default('pending');
             $table->timestamps();
         });
     }
