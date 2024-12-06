@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
-class Document extends Model
+class Document extends Model implements HasMedia
 {
-    use HasFactory;
-    
+    use InteractsWithMedia;
+
     protected $fillable = [
         'user_id',
         'title',
         'slug',
-        'file_path',
         'document_type',
         'tags',
         'tokens_used',
@@ -33,17 +32,15 @@ class Document extends Model
         parent::boot();
 
         static::deleting(function ($document) {
-            // Delete all related quiz sets first (this will cascade to quizzes if you set up the migrations)
-            $document->quizSets()->each(function ($quizSet) {
-                $quizSet->questions()->delete();  // Delete related quizzes first
-                $quizSet->delete();  // Then delete the quiz set
-            });
-            
-            // Delete the file if it exists
-            if ($document->file_path) {
-                Storage::disk('public')->delete($document->file_path);
-            }
+            $document->quizSets()->delete();
         });
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('document')
+            ->singleFile()
+            ->acceptsMimeTypes(['application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
     }
 
     public function user(): BelongsTo
@@ -51,18 +48,8 @@ class Document extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function generatedContents(): HasMany
-    {
-        return $this->hasMany(GeneratedContent::class);
-    }
-
     public function quizSets(): HasMany
     {
         return $this->hasMany(QuizSet::class);
-    }
-
-    public function getFileUrlAttribute()
-    {
-        return $this->file_path ? Storage::disk('public')->url($this->file_path) : null;
     }
 }
