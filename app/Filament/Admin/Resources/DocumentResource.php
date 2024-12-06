@@ -51,7 +51,10 @@ class DocumentResource extends Resource
                             ->disk('public')
                             ->directory('documents')
                             ->preserveFilenames()
-                            ->maxSize(5120), // 5MB
+                            ->maxSize(5120)
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(true), 
 
                         Forms\Components\Select::make('document_type')
                             ->options([
@@ -71,7 +74,7 @@ class DocumentResource extends Resource
                             ])
                             ->helperText('Press Enter or comma to add a tag'),
                     ])
-                    ->columns(1), // This makes all fields display in a single column
+                    ->columns(1),
             ]);
     }
 

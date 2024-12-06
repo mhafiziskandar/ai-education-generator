@@ -54,7 +54,10 @@ class DocumentResource extends Resource
                             ->disk('public')
                             ->directory('documents')
                             ->preserveFilenames()
-                            ->maxSize(5120), // 5MB
+                            ->maxSize(5120)
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(true), 
 
                         Forms\Components\Select::make('document_type')
                             ->options([
