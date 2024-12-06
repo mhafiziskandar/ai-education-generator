@@ -13,6 +13,7 @@ use Filament\Forms\Components\Section;
 use Filament\Notifications\Notification;
 use App\Filament\Student\Resources\DocumentResource\Pages;
 use App\Filament\Student\Resources\DocumentResource\RelationManagers;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 
 class DocumentResource extends Resource
 {
@@ -43,15 +44,13 @@ class DocumentResource extends Resource
                             ->dehydrated()
                             ->required(),
                             
-                        Forms\Components\FileUpload::make('file_path')
-                            ->label('Document')
-                            ->disk('public')
-                            ->directory('documents')
+                        SpatieMediaLibraryFileUpload::make('document')
+                            ->collection('document')
                             ->preserveFilenames()
                             ->maxSize(5120)
                             ->downloadable()
                             ->openable()
-                            ->previewable(true), 
+                            ->previewable(),
 
                         Forms\Components\Select::make('document_type')
                             ->options([
@@ -84,16 +83,19 @@ class DocumentResource extends Resource
                     ->sortable()
                     ->weight(FontWeight::Bold)
                     ->description(fn ($record): string => $record->slug ?? ''),
+
                 Tables\Columns\BadgeColumn::make('document_type')
                     ->colors([
                         'warning' => 'pptx',
                         'success' => 'pdf',
                         'info' => 'docx',
                     ]),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
+
                 Tables\Columns\TagsColumn::make('tags')
                     ->separator(',')
                     ->toggleable(),
