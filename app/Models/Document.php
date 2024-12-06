@@ -5,34 +5,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Document extends Model
 {
     use HasFactory;
-    // use HasUuids;
-
+    
     protected $fillable = [
         'user_id',
         'title',
+        'slug',
         'file_path',
         'document_type',
-        'content',
+        'tags',
         'tokens_used',
-        'processing_status',
+        'processing_status'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'tags' => 'array',
-        'file_path' => 'array'
+        'tokens_used' => 'integer'
     ];
 
-    protected static function boot() {
+    protected static function boot()
+    {
         parent::boot();
 
         static::deleting(function ($document) {
-            if($document->file_path) {
+            // Delete all related quiz sets first (this will cascade to quizzes if you set up the migrations)
+            $document->quizSets()->each(function ($quizSet) {
+                $quizSet->questions()->delete();  // Delete related quizzes first
+                $quizSet->delete();  // Then delete the quiz set
+            });
+            
+            // Delete the file if it exists
+            if ($document->file_path) {
                 Storage::disk('public')->delete($document->file_path);
             }
         });
@@ -48,9 +56,9 @@ class Document extends Model
         return $this->hasMany(GeneratedContent::class);
     }
 
-    public function quizzes()
+    public function quizSets(): HasMany
     {
-        return $this->hasMany(Quiz::class);
+        return $this->hasMany(QuizSet::class);
     }
 
     public function getFileUrlAttribute()
