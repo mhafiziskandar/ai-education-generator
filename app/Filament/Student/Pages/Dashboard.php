@@ -26,15 +26,15 @@ class Dashboard extends BasePage
     protected function getHeaderWidgets(): array
     {
         return [
-            StatsOverviewWidget::class,
-            RecentDocumentsWidget::class,
+            // StatsOverviewWidget::class,
+            // RecentDocumentsWidget::class,
         ];
     }
 
     protected function getFooterWidgets(): array
     {
         return [
-            UpcomingQuizzesWidget::class,
+            // UpcomingQuizzesWidget::class,
         ];
     }
 }
