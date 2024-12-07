@@ -57,4 +57,9 @@ class Document extends Model implements HasMedia
     {
         return $this->hasManyThrough(Quiz::class, QuizSet::class);
     }
+
+    public function generatedContents(): HasMany
+    {
+        return $this->hasMany(GeneratedContent::class);
+    }
 }
