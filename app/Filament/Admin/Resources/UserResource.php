@@ -49,16 +49,10 @@ class UserResource extends Resource
                             ->minLength(8)
                             ->dehydrated(false),
                         Forms\Components\Select::make('roles')
-                            ->label('Role')
-                            ->options([
-                                'student' => 'Student',
-                                'educator' => 'Educator',
-                                'admin' => 'Admin'
-                            ])
-                            ->required()
-                            ->searchable()
+                            ->relationship('roles', 'name')
                             ->preload()
-                            ->multiple(false)
+                            ->searchable()
+                            ->required(),
                     ])
                     ->columns([
                         'sm' => 2,
