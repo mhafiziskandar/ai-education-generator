@@ -18,12 +18,12 @@ class UpcomingQuizzesWidget extends BaseWidget
             ->heading('Upcoming Quizzes')
             ->query(
                 Quiz::where('status', 'pending')
-                    ->whereHas('document')
+                    ->whereHas('quizSet.document')
                     ->latest()
                     ->limit(5)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('document.title')
+                Tables\Columns\TextColumn::make('quizSet.document.title')
                     ->label('Material')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('due_date')

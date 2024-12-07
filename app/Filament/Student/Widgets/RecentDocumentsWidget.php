@@ -6,6 +6,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use App\Models\Document;
+use Illuminate\Database\Eloquent\Builder;
 
 class RecentDocumentsWidget extends BaseWidget
 {
@@ -16,7 +17,13 @@ class RecentDocumentsWidget extends BaseWidget
     {
         return $table
             ->heading('Recent Learning Materials')
-            ->query(Document::latest()->limit(5))
+            ->query(
+                Document::whereHas('quizSets', function (Builder $query) {
+                    $query->where('user_id', auth()->id());
+                })
+                ->latest()
+                ->limit(5)
+            )
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
