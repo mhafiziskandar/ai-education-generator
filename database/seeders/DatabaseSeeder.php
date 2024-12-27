@@ -12,9 +12,12 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            DocumentSeeder::class,
-            GeneratedContentSeeder::class,
-            AdminUserSeeder::class
+            RoleAndAdminSeeder::class,
+            // DocumentSeeder::class,
+            // GeneratedContentSeeder::class,
+            // DemoDataSeeder::class,
+            // QuizSeeder::class,
+            // GeneratedContentSeeder::class,
         ]);
     }
 }

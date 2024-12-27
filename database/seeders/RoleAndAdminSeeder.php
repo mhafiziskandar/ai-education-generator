@@ -25,7 +25,7 @@ class RoleAndAdminSeeder extends Seeder
         $studentRole->syncPermissions([$studentPermission]);
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'admin@email.com'],
             [
                 'name' => 'Admin User',
                 'password' => Hash::make('password'),
@@ -35,7 +35,7 @@ class RoleAndAdminSeeder extends Seeder
         $admin->assignRole('admin');
 
         $educator = User::firstOrCreate(
-            ['email' => 'educator@example.com'],
+            ['email' => 'educator@email.com'],
             [
                 'name' => 'Educator User',
                 'password' => Hash::make('password'),
@@ -45,7 +45,7 @@ class RoleAndAdminSeeder extends Seeder
         $educator->assignRole('educator');
 
         $educator = User::firstOrCreate(
-            ['email' => 'student@example.com'],
+            ['email' => 'student@email.com'],
             [
                 'name' => 'Student User',
                 'password' => Hash::make('password'),

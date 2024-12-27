@@ -12,13 +12,13 @@ class DocumentFactory extends Factory
     public function definition()
     {
         return [
+            'user_id' => 1,
             'title' => $this->faker->sentence,
-            'file_path' => 'documents/' . $this->faker->word . '.pdf', // Simulate random file paths
-            'document_type' => $this->faker->randomElement(['pdf', 'docx', 'pptx']), // Random document type
-            'content' => $this->faker->paragraphs(3, true), // Simulate random content
-            'is_processed' => $this->faker->boolean, // Random boolean for processed status
-            'tokens_used' => $this->faker->numberBetween(100, 1000), // Random token usage
-            'metadata' => json_encode(['extra_info' => $this->faker->sentence]), // Simulate JSON metadata
+            'slug' => $this->faker->slug,
+            'document_type' => $this->faker->randomElement(['pdf', 'docx', 'pptx']),
+            'tags' => json_encode($this->faker->words(3)),
+            'tokens_used' => $this->faker->numberBetween(100, 1000),
+            'processing_status' => 'pending',
             'created_at' => now(),
             'updated_at' => now(),
         ];

@@ -12,7 +12,7 @@ class DemoDataSeeder extends Seeder
 {
     public function run()
     {
-        $student = User::where('email', 'student@example.com')->first();
+        $student = User::where('email', 'student@email.com')->first();
 
         if (!$student) {
             echo "Error: Student account not found!\n";
@@ -23,32 +23,35 @@ class DemoDataSeeder extends Seeder
             [
                 'title' => 'Introduction to Programming',
                 'document_type' => 'pdf',
-                'file_path' => 'documents/programming.pdf',
                 'user_id' => $student->id,
             ],
             [
                 'title' => 'Database Management Systems',
                 'document_type' => 'pdf',
-                'file_path' => 'documents/database.pdf',
                 'user_id' => $student->id,
             ],
             [
                 'title' => 'Web Development Basics',
                 'document_type' => 'pdf',
-                'file_path' => 'documents/web.pdf',
                 'user_id' => $student->id,
             ],
         ];
 
         foreach ($documents as $doc) {
+            // Create a document without the file_path
             $document = Document::create($doc);
+
+            // Add a media file using Spatie Media Library
+            $document->addMedia(storage_path("app/demo_files/{$doc['title']}.pdf"))
+                     ->preservingOriginal()
+                     ->toMediaCollection('documents');
 
             // Create a quiz set for this document
             $quizSet = QuizSet::create([
                 'user_id' => $student->id,
                 'document_id' => $document->id,
                 'title' => "Quiz for {$document->title}",
-                'status' => 'active'
+                'status' => 'active',
             ]);
 
             // Add questions to this quiz set
@@ -64,21 +67,6 @@ class DemoDataSeeder extends Seeder
                         'correct_answer' => "A programming construct that repeats a block of code multiple times.",
                         'status' => 'completed',
                     ],
-                    [
-                        'question' => "What is the difference between while and for loops?",
-                        'correct_answer' => "While loops continue until a condition is false, for loops iterate a specific number of times.",
-                        'status' => 'active',
-                    ],
-                    [
-                        'question' => "What is a function in programming?",
-                        'correct_answer' => "A reusable block of code that performs a specific task.",
-                        'status' => 'active',
-                    ],
-                    [
-                        'question' => "What is an array?",
-                        'correct_answer' => "A data structure that stores multiple values in a single variable.",
-                        'status' => 'active',
-                    ],
                 ],
                 'Database Management Systems' => [
                     [
@@ -90,21 +78,6 @@ class DemoDataSeeder extends Seeder
                         'question' => "What is SQL?",
                         'correct_answer' => "Structured Query Language - a standard language for managing and manipulating databases.",
                         'status' => 'completed',
-                    ],
-                    [
-                        'question' => "What is a JOIN in SQL?",
-                        'correct_answer' => "A clause used to combine rows from two or more tables based on a related column.",
-                        'status' => 'active',
-                    ],
-                    [
-                        'question' => "What is normalization in databases?",
-                        'correct_answer' => "The process of organizing data to minimize redundancy and dependency by organizing fields and tables of a database.",
-                        'status' => 'active',
-                    ],
-                    [
-                        'question' => "What is a foreign key?",
-                        'correct_answer' => "A field in one table that refers to the primary key in another table.",
-                        'status' => 'active',
                     ],
                 ],
                 'Web Development Basics' => [
@@ -118,23 +91,8 @@ class DemoDataSeeder extends Seeder
                         'correct_answer' => "Styling and formatting the visual presentation of HTML documents.",
                         'status' => 'completed',
                     ],
-                    [
-                        'question' => "What is the difference between inline and block elements?",
-                        'correct_answer' => "Inline elements flow within text and only take up as much width as necessary, while block elements start on new lines and take up the full width available.",
-                        'status' => 'active',
-                    ],
-                    [
-                        'question' => "What is JavaScript?",
-                        'correct_answer' => "A programming language that enables interactive web pages and is an essential part of web applications.",
-                        'status' => 'active',
-                    ],
-                    [
-                        'question' => "What is responsive design?",
-                        'correct_answer' => "An approach to web design that makes web pages render well on a variety of devices and window or screen sizes.",
-                        'status' => 'active',
-                    ],
                 ],
-                default => []
+                default => [],
             };
 
             foreach ($questions as $question) {
