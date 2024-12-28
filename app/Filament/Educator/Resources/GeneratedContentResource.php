@@ -15,6 +15,7 @@ use App\Filament\Educator\Resources\GeneratedContentResource\Pages\CreateGenerat
 use App\Filament\Educator\Resources\GeneratedContentResource\Pages\EditGeneratedContent as PagesEditGeneratedContent;
 use App\Filament\Educator\Resources\GeneratedContentResource\Pages\ListGeneratedContents as PagesListGeneratedContents;
 use App\Filament\Educator\Resources\GeneratedContentResource\Pages\ViewGeneratedContent as PagesViewGeneratedContent;
+use Filament\Tables\Actions\Action;
 
 class GeneratedContentResource extends Resource
 {
@@ -42,6 +43,7 @@ class GeneratedContentResource extends Resource
                             ])
                             ->live()
                             ->required(),
+                        // Lesson Plan specific fields
                         Forms\Components\Grid::make()
                             ->schema([
                                 Forms\Components\Grid::make()
@@ -52,19 +54,16 @@ class GeneratedContentResource extends Resource
                                             ->default(1)
                                             ->minValue(0)
                                             ->maxValue(24)
-                                            ->suffix('hours')
-                                            ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
+                                            ->suffix('hours'),
                                         Forms\Components\TextInput::make('duration_minutes')
                                             ->label('Minutes')
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
                                             ->maxValue(59)
-                                            ->suffix('mins')
-                                            ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
+                                            ->suffix('mins'),
                                     ])
-                                    ->columns(2)
-                                    ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
+                                    ->columns(2),
                                 Forms\Components\Select::make('grade_level')
                                     ->label('Grade Level')
                                     ->options([
@@ -73,17 +72,19 @@ class GeneratedContentResource extends Resource
                                         'high' => 'High School',
                                         'college' => 'College',
                                     ])
-                                    ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan')
                                     ->required(),
-                            ]),
-                        Forms\Components\Toggle::make('include_images')
-                            ->label('Include Images')
-                            ->default(true),
-                        // Forms\Components\RichEditor::make('content')
-                        //     ->required()
-                        //     ->columnSpanFull(),
-                        // Forms\Components\KeyValue::make('settings')
-                        //     ->label('Generation Settings'),
+                                Forms\Components\Select::make('teaching_method')
+                                    ->label('Teaching Method')
+                                    ->options([
+                                        'lecture' => 'Traditional Lecture',
+                                        'interactive' => 'Interactive Discussion',
+                                        'group_work' => 'Group Work',
+                                        'project_based' => 'Project-Based Learning',
+                                        'flipped' => 'Flipped Classroom',
+                                    ])
+                                    ->required(),
+                            ])
+                            ->visible(fn (Get $get) => $get('content_type') === 'lesson_plan'),
                     ])
             ]);
     }
@@ -99,10 +100,35 @@ class GeneratedContentResource extends Resource
                 Tables\Columns\TextColumn::make('content_type')
                     ->label('Content Type')
                     ->sortable(),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->colors([
+                        'danger' => 'failed',
+                        'warning' => 'processing',
+                        'success' => 'completed',
+                    ])
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tokens_used')
+                    ->label('Tokens')
+                    ->numeric(),
+                Tables\Columns\TextColumn::make('api_cost')
+                    ->money('usd')
+                    ->label('Cost'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created At')
                     ->dateTime()
                     ->sortable(),
+            ])
+            ->actions([
+                Action::make('view_pdf')
+                    ->label('View PDF')
+                    ->icon('heroicon-o-document')
+                    ->url(fn (GeneratedContent $record) => $record->getFirstMedia('generated_pdfs')?->getUrl())
+                    ->openUrlInNewTab()
+                    ->visible(fn (GeneratedContent $record) => $record->getFirstMedia('generated_pdfs') !== null),
+                Action::make('download_pdf')
+                    ->label('Download PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn (GeneratedContent $record) => $record->getFirstMedia('generated_pdfs')?->getUrl(), shouldOpenInNewTab: true)
+                    ->visible(fn (GeneratedContent $record) => $record->getFirstMedia('generated_pdfs') !== null),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('content_type')
@@ -112,11 +138,11 @@ class GeneratedContentResource extends Resource
                         'summary' => 'Summary',
                     ]),
             ])
-            ->emptyStateIcon('heroicon-o-academic-cap') // Icon for empty state
-            ->emptyStateHeading('No Generated Content Found') // Heading for empty state
-            ->emptyStateDescription('No content has been generated yet. Please create new content.') // Description for empty state
+            ->emptyStateIcon('heroicon-o-academic-cap')
+            ->emptyStateHeading('No Generated Content Found')
+            ->emptyStateDescription('No content has been generated yet. Please create new content.')
             ->emptyStateActions([
-                Tables\Actions\CreateAction::make()->label('Generate Content'), // Call to action for empty state
+                Tables\Actions\CreateAction::make()->label('Generate Content'),
             ]);
     }
 
@@ -130,7 +156,6 @@ class GeneratedContentResource extends Resource
         ];
     }
 
-    // Only show content generated by the logged-in educator
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('user_id', auth()->id());

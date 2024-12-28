@@ -13,26 +13,30 @@ class CreateGeneratedContent extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $document = Document::findOrFail($data['document_id']);
+        $data['user_id'] = auth()->id();
+        $data['status'] = 'pending';
         
-        // Initialize the service
-        $generator = app(ContentGeneratorService::class);
+        return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        $contentService = app(ContentGenerationService::class);
         
-        // Generate the content and get the result
-        $generatedContent = $generator->generateContent($document, $data['content_type']);
-        
-        // Return the data in the format expected by the form
-        return [
-            'document_id' => $document->id,
-            'content_type' => $data['content_type'],
-            'content' => $generatedContent->content,
-            'token_used' => $generatedContent->token_used,
-            'api_cost' => $generatedContent->api_cost,
-        ];
+        try {
+            $generatedContent = $contentService->generateContent($this->record);
+            
+            $this->record->update([
+                'content' => $generatedContent,
+            ]);
+        } catch (\Exception $e) {
+            // Error handling is done in the service
+            report($e);
+        }
     }
 
     protected function getRedirectUrl(): string
     {
-        return static::getResource()::getUrl('view', ['record' => $this->record]);
+        return $this->getResource()::getUrl('view', ['record' => $this->record]);
     }
 }

@@ -4,20 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class GeneratedContent extends Model
+class GeneratedContent extends Model implements HasMedia
 {
-    use HasFactory;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'document_id',
-        'content_type', // quiz, study_guide, summary, learning_path
+        'user_id',
+        'content_type',
         'content',
         'status',
         'tokens_used',
         'api_cost',
+        'duration_hours',
+        'duration_minutes',
+        'grade_level',
+        'teaching_method'
     ];
 
     protected $casts = [
@@ -27,5 +33,30 @@ class GeneratedContent extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(Document::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('generated_pdfs')
+            ->useDisk('public')
+            ->singleFile();     // Only keep the latest PDF
+    }
+
+    public function registerMediaConversions(Media $media = null): void
+    {
+        
+    }
+
+    public function getPdfUrl(): ?string
+    {
+        $media = $this->getFirstMedia('generated_pdfs');
+        return $media ? $media->getUrl() : null;
+    }
+
+    public function getPdfPath(): ?string
+    {
+        $media = $this->getFirstMedia('generated_pdfs');
+        return $media ? $media->getPath() : null;
     }
 }
