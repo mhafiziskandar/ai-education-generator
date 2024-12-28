@@ -5,27 +5,33 @@ namespace App\Services;
 use OpenAI\Laravel\Facades\OpenAI;
 use App\Models\GeneratedContent;
 use App\Models\Document;
+use App\Services\Traits\DocumentExtractor;
 use Smalot\PdfParser\Parser;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Str;
+use Spatie\PdfToText\Pdf;
+use PhpOffice\PhpWord\IOFactory as WordFactory;
+use PhpOffice\PhpWord\Element\Text;
+use PhpOffice\PhpPresentation\IOFactory as PresentationFactory;
 
 class ContentGenerationService
 {
+    use DocumentExtractor;
+
     private const COST_PER_INPUT_TOKEN = 0.0000015;
     private const COST_PER_OUTPUT_TOKEN = 0.000002;
     private const MAX_INPUT_TOKENS = 3000; // Increased for larger input size
     private const MAX_OUTPUT_TOKENS = 500; // Reduced for testing
     private const PDF_PREVIEW_LENGTH = 100;
+    private const DOCUMENT_COLLECTION = 'document';
+    private const GENERATED_PDF_COLLECTION = 'generated_pdfs';
 
     private $pdfParser;
     private $dompdf;
 
     public function __construct()
     {
-        // Initialize PDF parser
-        $this->pdfParser = new Parser();
-
         // Configure Dompdf options
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
@@ -40,54 +46,199 @@ class ContentGenerationService
      */
     private function getDocumentContent(Document $document): string
     {
-        if ($document->mime_type === 'application/pdf') {
-            try {
-                $media = $document->getFirstMedia('documents');
-                if (!$media) {
-                    \Log::error('PDF file not found in media library', [
-                        'document_id' => $document->id,
-                    ]);
-                    throw new \Exception('PDF file not found in media library');
-                }
-
-                $path = $media->getPath();
-                \Log::info('PDF processing started.', [
-                    'path' => $path,
-                    'exists' => file_exists($path),
-                    'size' => file_exists($path) ? filesize($path) : 0,
-                ]);
-
-                $text = $this->pdfParser->parseFile($path)->getText();
-                if (empty(trim($text))) {
-                    \Log::error('PDF text extraction returned empty content.', [
-                        'path' => $path,
-                    ]);
-                    throw new \Exception('PDF content is empty or not extractable.');
-                }
-
-                \Log::info('PDF content extracted successfully.', [
-                    'content_length' => strlen($text),
-                    'content_preview' => substr($text, 0, self::PDF_PREVIEW_LENGTH),
-                ]);
-
-                return $text;
-            } catch (\Exception $e) {
-                \Log::error('Error extracting PDF content.', [
-                    'error_message' => $e->getMessage(),
-                    'stack_trace' => $e->getTraceAsString(),
-                ]);
-                throw new \Exception('Unable to extract PDF content: ' . $e->getMessage());
-            }
+        \Log::info('Accessing document', [
+            'document_id' => $document->id,
+            'mime_type' => $document->mime_type,
+            'media_collections' => $document->getMedia()->pluck('collection_name'),
+            'has_document_collection' => $document->getMedia('document')->count(),
+            'first_media' => $document->getFirstMedia('document') ? 'exists' : 'null',
+        ]);
+        
+        $media = $document->getFirstMedia('document');
+        if (!$media) {
+            throw new \Exception('Document file not found in media library');
         }
 
-        // Return plain content if not a PDF
-        $content = $document->content ?? $document->raw_content ?? '';
-        \Log::info('Plain document content extracted.', [
-            'content_length' => strlen($content),
-            'content_preview' => substr($content, 0, self::PDF_PREVIEW_LENGTH),
+        $path = $media->getPath();
+        if (!file_exists($path)) {
+            throw new \Exception("File does not exist at path: {$path}");
+        }
+
+        $mimeType = $document->mime_type ?? $media->mime_type;
+        if (!$mimeType) {
+            throw new \Exception('MIME type is not set for document');
+        }
+
+        \Log::info('Processing document', [
+            'mime_type' => $mimeType,
+            'path' => $path,
+            'file_size' => filesize($path)
         ]);
 
-        return $content;
+        try {
+            return match ($mimeType) {
+                'application/pdf' => $this->extractPdfContent($path),
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/msword' => $this->extractDocxContent($path),
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.ms-powerpoint' => $this->extractPptxContent($path),
+                default => throw new \Exception("Unsupported file type: {$mimeType}")
+            };
+        } catch (\Exception $e) {
+            \Log::error("Error extracting content from {$mimeType} document", [
+                'error' => $e->getMessage(),
+                'document_id' => $document->id,
+                'path' => $path
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Extract content from PDF using multiple fallback methods.
+     */
+    private function extractPdfContent(string $path): string
+    {
+        // Try pdftotext first (requires poppler-utils)
+        try {
+            $text = (new Pdf())
+                ->setPdf($path)
+                ->setOptions(['layout', 'quiet'])
+                ->text();
+
+            if (!empty(trim($text))) {
+                return $text;
+            }
+        } catch (\Exception $e) {
+            \Log::warning('pdftotext extraction failed, trying OCR fallback', [
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Fallback to Tesseract OCR for scanned PDFs
+        try {
+            // Convert PDF to images first
+            $imagePaths = $this->convertPdfToImages($path);
+            $text = '';
+            
+            foreach ($imagePaths as $imagePath) {
+                $text .= (new \thiagoalessio\TesseractOCR\TesseractOCR($imagePath))
+                    ->run();
+                unlink($imagePath); // Clean up temporary image
+            }
+
+            if (!empty(trim($text))) {
+                return $text;
+            }
+        } catch (\Exception $e) {
+            \Log::warning('OCR extraction failed', [
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Last resort: try Smalot PDF Parser
+        try {
+            $parser = new \Smalot\PdfParser\Parser();
+            return $parser->parseFile($path)->getText();
+        } catch (\Exception $e) {
+            \Log::error('All PDF extraction methods failed', [
+                'error' => $e->getMessage()
+            ]);
+            throw new \Exception('Unable to extract PDF content using any available method');
+        }
+    }
+
+    /**
+     * Convert PDF pages to images for OCR processing.
+     */
+    private function convertPdfToImages(string $pdfPath): array
+    {
+        $imagePaths = [];
+        $imagick = new \Imagick();
+        $imagick->setResolution(300, 300);
+        $imagick->readImage($pdfPath);
+        
+        foreach ($imagick as $i => $page) {
+            $page->setImageFormat('png');
+            $imagePath = storage_path("app/temp/page_{$i}.png");
+            $page->writeImage($imagePath);
+            $imagePaths[] = $imagePath;
+        }
+
+        return $imagePaths;
+    }
+
+    /**
+     * Extract content from DOCX files.
+     */
+    private function extractDocxContent(string $path): string
+    {
+        try {
+            \Log::info('Starting DOCX extraction', [
+                'path' => $path,
+                'file_exists' => file_exists($path),
+            ]);
+
+            $phpWord = WordFactory::load($path);
+            $text = '';
+            
+            // Extract text from each section
+            foreach ($phpWord->getSections() as $section) {
+                foreach ($section->getElements() as $element) {
+                    if (method_exists($element, 'getText')) {
+                        $text .= $element->getText() . "\n";
+                    } elseif (method_exists($element, 'getElements')) {
+                        // Handle tables and other complex elements
+                        foreach ($element->getElements() as $childElement) {
+                            if (method_exists($childElement, 'getText')) {
+                                $text .= $childElement->getText() . "\n";
+                            }
+                        }
+                    }
+                }
+            }
+
+            $text = trim($text);
+            
+            if (empty($text)) {
+                \Log::warning('DOCX extraction produced empty text', [
+                    'path' => $path
+                ]);
+                throw new \Exception('Extracted DOCX content is empty');
+            }
+
+            \Log::info('Successfully extracted DOCX content', [
+                'text_length' => strlen($text),
+                'preview' => substr($text, 0, 100)
+            ]);
+
+            return $text;
+        } catch (\Exception $e) {
+            \Log::error('Failed to extract DOCX content', [
+                'error' => $e->getMessage(),
+                'path' => $path
+            ]);
+            throw new \Exception('Unable to extract DOCX content: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Extract content from PPTX files.
+     */
+    private function extractPptxContent(string $path): string
+    {
+        $presentation = PresentationFactory::load($path);
+        $text = '';
+        
+        foreach ($presentation->getAllSlides() as $slide) {
+            foreach ($slide->getShapeCollection() as $shape) {
+                if (method_exists($shape, 'getText')) {
+                    $text .= $shape->getText() . "\n";
+                }
+            }
+        }
+        
+        return $text;
     }
 
     /**
